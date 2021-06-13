@@ -1,7 +1,10 @@
-cmake_minimum_required(VERSION 3.15.2)
+cmake_minimum_required(VERSION 3.15)
 
-# Change `MY_PROJECT_NAME` to the name of your project
-project(MY_PROJECT_NAME)
+project(
+    pjutil
+    VERSION 0.0.0
+    LANGUAGES CXX
+)
 
 set(LIB_NAME ${PROJECT_NAME})
 set(BIN_NAME ${PROJECT_NAME}bin)
@@ -11,8 +14,16 @@ set(BIN_OUTPUT_NAME ${PROJECT_NAME})
 
 set(ALL_TARGETS ${LIB_NAME} ${BIN_NAME})
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# Link this 'library' to set the c++ standard / compile-time options requested
+add_library(project_options INTERFACE)
+target_compile_features(project_options INTERFACE cxx_std_17)
+
+# Link this 'library' to use the warnings specified in CompilerWarnings.cmake
+add_library(project_warnings INTERFACE)
+
+# standard compiler warnings
+include(cmake/CompilerWarnings.cmake)
+set_project_warnings(project_warnings)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY lib)
@@ -30,24 +41,25 @@ add_compile_options(-Wall -Wextra)
 
 add_library(
     ${LIB_NAME}
-    # Path to the project's source files go here
+    INTERFACE
 )
 
 target_include_directories(
     ${LIB_NAME}
-    PUBLIC
+    INTERFACE
     include
 )
 
 target_link_libraries(
     ${LIB_NAME}
-    PRIVATE
+    INTERFACE
     Threads::Threads
+    project_options
+    project_warnings
 )
 
 add_executable(
     ${BIN_NAME}
-    # Path to the cpp file containing your main function
     ${SRC_DIR}/main.cpp
 )
 
@@ -55,6 +67,8 @@ target_link_libraries(
     ${BIN_NAME}
     PRIVATE
     ${LIB_NAME}
+    project_options
+    project_warnings
 )
 
 set_target_properties(
@@ -62,14 +76,6 @@ set_target_properties(
     PROPERTIES
     OUTPUT_NAME ${BIN_OUTPUT_NAME}
 )
-
-foreach(TARGET_NAME ${ALL_TARGETS})
-    target_compile_options(
-        ${TARGET_NAME}
-        PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:-Weffc++>
-    )
-endforeach()
 
 if (${TEST_ENABLED})
     enable_testing()

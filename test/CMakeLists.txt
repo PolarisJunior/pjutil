@@ -3,6 +3,7 @@
 set(
     ALL_TESTS 
     example
+    container/test_parallel_deque
 )
 
 function(add_test_binary TEST_NAME)
